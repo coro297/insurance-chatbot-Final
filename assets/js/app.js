@@ -275,6 +275,7 @@ function InsuranceChatbot({ allQuestions }) {
         const responseJson = await response.json();
         console.log('Submission successful. n8n responded with:', responseJson);
 
+        /*
         // Forward the OCR response to our own backend to update the DB
         console.log('Forwarding n8n response to local server...');
         const nodeRes = await fetch(`${CONFIG.documentServerUrl}/leads/update`, {
@@ -287,6 +288,7 @@ function InsuranceChatbot({ allQuestions }) {
             const txt = await nodeRes.text();
             throw new Error(`Node server (for DB update) error: ${nodeRes.status} ${txt}`);
         }
+        */
     }
   };
 
