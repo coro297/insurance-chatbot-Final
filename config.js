@@ -8,7 +8,8 @@ const CONFIG = {
   documentServerUrl: 'https://insurance-chatbot-backend.onrender.com',
   
   // The specific endpoint for submitting the initial Q&A form data
-  webhookUrl: 'https://insurance-chatbot-backend.onrender.com/save',
+  // webhookUrl: 'https://insurance-chatbot-backend.onrender.com/save',
+  webhookUrl: 'https://smarttouch.ngrok.dev/webhook/motor',
   
   // Upload format (base64, formdata, or multipart)
   uploadFormat: 'base64',
