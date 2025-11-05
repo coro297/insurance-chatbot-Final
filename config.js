@@ -4,8 +4,11 @@
 // ============================================
 
 const CONFIG = {
-  // This URL will be replaced with your live backend URL from Railway in a later step.
-  documentServerUrl: 'https://your-backend-url.up.railway.app',
+  // The URL for the Node.js backend running on Render
+  documentServerUrl: 'https://insurance-chatbot-backend.onrender.com',
+  
+  // The specific endpoint for submitting the initial Q&A form data
+  webhookUrl: 'https://insurance-chatbot-backend.onrender.com/save',
   
   // Upload format (base64, formdata, or multipart)
   uploadFormat: 'base64',
