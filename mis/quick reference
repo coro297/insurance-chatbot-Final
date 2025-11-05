@@ -1,0 +1,143 @@
+# 🤖 AI Insurance Chatbot
+
+> Futuristic dark-themed AI chatbot for automated insurance quote collection with OCR document processing.
+
+## 🚀 Quick Start
+
+### Option 1: Open Directly in Browser
+```bash
+# Just double-click index.html
+# OR
+cd insurance-chatbot
+xdg-open index.html  # Linux
+start index.html     # Windows
+```
+
+### Option 2: Run with Python Server
+```bash
+cd insurance-chatbot
+python3 -m http.server 8080
+
+# Open: http://localhost:8080
+```
+
+## ⚙️ Configuration
+
+Edit `index.html` (Line 42):
+```javascript
+webhookUrl: 'https://your-n8n-url.com/webhook/insurance-intake'
+```
+
+## 📋 Features
+
+- ✅ 14 Smart Questions (Text, Select, Yes/No, Date, Number, File Upload)
+- ✅ Conditional Question Logic (show_if)
+- ✅ Input Validation (Regex, Min/Max, Required)
+- ✅ Multi-Document Upload (Emirates ID, License, Mulkiya)
+- ✅ Base64 File Encoding
+- ✅ Real-time Error Handling
+- ✅ Futuristic Dark + Neon UI
+- ✅ Mobile Responsive
+- ✅ n8n Webhook Integration
+
+## 📂 Project Structure
+
+```
+insurance-chatbot/
+├── index.html          # Main chatbot (standalone file)
+├── README.md           # This file
+└── assets/             # Optional: logos, custom styles
+```
+
+## 🎨 Customization
+
+### Add New Question
+In `index.html`, find `QUESTIONS_CONFIG` and add:
+```javascript
+{
+  id: 'question_id',
+  question: 'Your question here?',
+  type: 'text',  // or 'select', 'yes_no', 'date', 'number', 'file_upload'
+  options: ['Option 1', 'Option 2'],  // for select type
+  required: true,
+  validation: {
+    pattern: '^[a-zA-Z]+$',
+    errorMessage: 'Custom error message'
+  }
+}
+```
+
+### Change Branding
+```javascript
+brandName: 'Your Company',
+welcomeMessage: 'Custom welcome message',
+```
+
+## 🔗 n8n Integration
+
+Expected payload format:
+```json
+{
+  "full_name": "Ahmed Khan",
+  "mobile": "+971501234567",
+  "email": "ahmed@example.com",
+  "documents": [
+    {
+      "name": "emirates_id.jpg",
+      "type": "image/jpeg",
+      "data": "data:image/jpeg;base64,..."
+    }
+  ],
+  "timestamp": "2025-10-08T14:32:15Z",
+  "source": "ai_chatbot_v1"
+}
+```
+
+## 🧪 Testing
+
+1. Open browser console (F12)
+2. Fill out chatbot form
+3. Upload documents
+4. Check console logs:
+   - "Submitting to webhook: ..."
+   - "Payload: {...}"
+   - "Webhook response: ..."
+
+## 🆘 Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| Chatbot not loading | Check browser console for errors |
+| File upload fails | Check file size (<10MB) and type (JPG/PNG/PDF) |
+| Webhook fails | Verify n8n URL and check n8n logs |
+| Questions not showing | Check QUESTIONS_CONFIG syntax |
+
+## 📱 Browser Support
+
+- ✅ Chrome 90+
+- ✅ Firefox 88+
+- ✅ Safari 14+
+- ✅ Edge 90+
+- ✅ Mobile browsers (iOS Safari, Chrome Mobile)
+
+## 🔒 Security Notes
+
+- Files are base64 encoded in browser
+- No localStorage used (session-only)
+- HTTPS recommended for production
+- Validate all inputs on n8n side
+
+## 📞 Support
+
+For issues or customization requests, provide:
+1. Browser console errors
+2. n8n workflow screenshot
+3. Description of the issue
+
+## 📄 License
+
+MIT License - Free to use and modify
+
+---
+
+**Built with ❤️ using React, Tailwind CSS, and Lucide Icons**

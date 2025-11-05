@@ -1,0 +1,458 @@
+# 🔗 n8n Integration Guide
+
+## Overview
+
+This guide shows how to set up n8n to receive data from the AI Insurance Chatbot.
+
+## n8n Workflow Structure
+
+```
+┌─────────────┐
+│   Webhook   │  ← Receives chatbot data
+└──────┬──────┘
+       │
+       v
+┌─────────────┐
+│  Function   │  ← Process & validate data
+└──────┬──────┘
+       │
+       v
+┌─────────────┐
+│ Save Files  │  ← Decode base64 & save to disk
+└──────┬──────┘
+       │
+       v
+┌─────────────┐
+│ MySQL Save  │  ← Insert into database
+└──────┬──────┘
+       │
+       v
+┌─────────────┐
+│ OCR Trigger │  ← Start OCR processing
+└──────┬──────┘
+       │
+       v
+┌─────────────┐
+│  Response   │  ← Return success message
+└─────────────┘
+```
+
+---
+
+## Step 1: Create Webhook Node
+
+**Settings:**
+- **HTTP Method:** POST
+- **Path:** `/insurance-intake`
+- **Authentication:** None (or Bearer Token for security)
+- **Response Mode:** When Last Node Finishes
+- **Response Data:** First Entry JSON
+
+---
+
+## Step 2: Function Node - Process Data
+
+**Purpose:** Validate and extract data
+
+**Code:**
+```javascript
+// Get incoming data
+const incomingData = $input.first().json.body;
+
+// Extract user details
+const userData = {
+  full_name: incomingData.full_name,
+  mobile: incomingData.mobile,
+  email: incomingData.email,
+  dob: incomingData.dob,
+  gender: incomingData.gender,
+  nationality: incomingData.nationality,
+  salary_range: incomingData.salary_range,
+  has_existing_insurance: incomingData.has_existing_insurance,
+  current_insurer: incomingData.current_insurer || null,
+  insurance_type: incomingData.insurance_type,
+  vehicle_make: incomingData.vehicle_make,
+  vehicle_model: incomingData.vehicle_model,
+  vehicle_year: parseInt(incomingData.vehicle_year),
+  timestamp: incomingData.timestamp,
+  source: incomingData.source
+};
+
+// Extract documents
+const documents = incomingData.documents || [];
+
+// Generate unique client ID
+const clientId = `CLI-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+return [
+  {
+    json: {
+      client_id: clientId,
+      user_data: userData,
+      documents: documents,
+      document_count: documents.length
+    }
+  }
+];
+```
+
+---
+
+## Step 3: Code Node - Save Files to Disk
+
+**Purpose:** Decode base64 and save files
+
+**Code:**
+```javascript
+const fs = require('fs');
+const path = require('path');
+
+// Get data from previous node
+const data = $input.first().json;
+const clientId = data.client_id;
+const documents = data.documents;
+
+// Create directory for this client
+const uploadDir = `/home/avonitsupport/insurance-automation-platform/uploads/${clientId}`;
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Process each document
+const savedFiles = documents.map((doc, index) => {
+  // Extract base64 data (remove "data:image/jpeg;base64," prefix)
+  const base64Data = doc.data.split(',')[1] || doc.data;
+  
+  // Create file path
+  const fileName = doc.name || `document_${index + 1}.${doc.type.split('/')[1]}`;
+  const filePath = path.join(uploadDir, fileName);
+  
+  // Save file
+  fs.writeFileSync(filePath, base64Data, 'base64');
+  
+  return {
+    original_name: doc.name,
+    saved_path: filePath,
+    file_type: doc.type,
+    file_size: Buffer.byteLength(base64Data, 'base64')
+  };
+});
+
+return [
+  {
+    json: {
+      client_id: clientId,
+      user_data: data.user_data,
+      saved_files: savedFiles,
+      upload_directory: uploadDir
+    }
+  }
+];
+```
+
+---
+
+## Step 4: MySQL Node - Insert Client Data
+
+**Settings:**
+- **Operation:** Insert
+- **Table:** `clients` (or your table name)
+
+**SQL Query:**
+```sql
+INSERT INTO clients (
+  client_id,
+  full_name,
+  mobile,
+  email,
+  dob,
+  gender,
+  nationality,
+  salary_range,
+  has_existing_insurance,
+  current_insurer,
+  insurance_type,
+  vehicle_make,
+  vehicle_model,
+  vehicle_year,
+  source,
+  status,
+  created_at
+) VALUES (
+  '{{ $json.client_id }}',
+  '{{ $json.user_data.full_name }}',
+  '{{ $json.user_data.mobile }}',
+  '{{ $json.user_data.email }}',
+  '{{ $json.user_data.dob }}',
+  '{{ $json.user_data.gender }}',
+  '{{ $json.user_data.nationality }}',
+  '{{ $json.user_data.salary_range }}',
+  '{{ $json.user_data.has_existing_insurance }}',
+  '{{ $json.user_data.current_insurer }}',
+  '{{ $json.user_data.insurance_type }}',
+  '{{ $json.user_data.vehicle_make }}',
+  '{{ $json.user_data.vehicle_model }}',
+  {{ $json.user_data.vehicle_year }},
+  '{{ $json.user_data.source }}',
+  'pending_ocr',
+  NOW()
+)
+```
+
+---
+
+## Step 5: MySQL Node - Insert Documents
+
+**Settings:**
+- **Operation:** Insert Multiple
+- **Table:** `documents`
+
+**Expression for Multiple Inserts:**
+```javascript
+{{
+  $json.saved_files.map(file => ({
+    client_id: $json.client_id,
+    doc_name: file.original_name,
+    doc_path: file.saved_path,
+    doc_type: file.file_type,
+    doc_size: file.file_size,
+    status: 'uploaded',
+    created_at: new Date().toISOString()
+  }))
+}}
+```
+
+---
+
+## Step 6: HTTP Request Node - Trigger OCR
+
+**Purpose:** Call your Python OCR worker
+
+**Settings:**
+- **Method:** POST
+- **URL:** `http://localhost:8001/trigger-ocr`
+- **Authentication:** None (or API key)
+- **Body:**
+```json
+{
+  "client_id": "{{ $json.client_id }}",
+  "upload_directory": "{{ $json.upload_directory }}",
+  "documents": {{ JSON.stringify($json.saved_files) }}
+}
+```
+
+---
+
+## Step 7: Respond to Webhook
+
+**Purpose:** Send success response back to chatbot
+
+**Settings:**
+- **Node Type:** Respond to Webhook
+- **Response Code:** 200
+- **Response Body:**
+```json
+{
+  "success": true,
+  "message": "Documents received successfully",
+  "client_id": "{{ $json.client_id }}",
+  "documents_received": {{ $json.saved_files.length }},
+  "status": "processing",
+  "next_steps": "OCR processing started"
+}
+```
+
+---
+
+## Alternative: Simpler Version (No File Saving)
+
+If you want to process files directly without saving:
+
+```javascript
+// In Function Node
+const data = $input.first().json.body;
+
+// Send directly to OCR API
+return [{
+  json: {
+    client_data: {
+      name: data.full_name,
+      email: data.email,
+      // ... other fields
+    },
+    documents: data.documents.map(doc => ({
+      name: doc.name,
+      type: doc.type,
+      base64: doc.data
+    }))
+  }
+}];
+```
+
+Then use HTTP Request node to send to Google Vision / AWS Textract / Your OCR service.
+
+---
+
+## Security Recommendations
+
+### 1. Add Authentication
+In Webhook node:
+- Enable "Basic Auth" or "Header Auth"
+- Set custom header: `X-API-Key: your-secret-key`
+
+Update chatbot (index.html):
+```javascript
+const response = await fetch(CONFIG.webhookUrl, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-Key': 'your-secret-key'  // ← ADD THIS
+  },
+  body: JSON.stringify(payload)
+});
+```
+
+### 2. Rate Limiting
+Add a "Rate Limit" node before processing to prevent abuse.
+
+### 3. File Validation
+Add validation in Function node:
+```javascript
+// Check file sizes
+const maxSize = 10 * 1024 * 1024; // 10MB
+const validFiles = documents.filter(doc => {
+  const size = Buffer.byteLength(doc.data.split(',')[1], 'base64');
+  return size <= maxSize;
+});
+
+if (validFiles.length !== documents.length) {
+  throw new Error('Some files exceed size limit');
+}
+```
+
+---
+
+## Testing Your Workflow
+
+### 1. Test Webhook URL
+
+```bash
+curl -X POST http://localhost:5678/webhook/insurance-intake \
+  -H "Content-Type: application/json" \
+  -d '{
+    "full_name": "Test User",
+    "email": "test@example.com",
+    "mobile": "+971501234567",
+    "documents": []
+  }'
+```
+
+Expected response:
+```json
+{
+  "success": true,
+  "message": "Documents received successfully",
+  "client_id": "CLI-1696789012345-abc123"
+}
+```
+
+### 2. Test with Chatbot
+
+1. Open your chatbot
+2. Fill out the form
+3. Upload test documents
+4. Check n8n execution logs
+5. Verify files saved to disk
+6. Check MySQL database entries
+
+---
+
+## Troubleshooting
+
+### Issue: Webhook not receiving data
+**Fix:**
+- Check n8n is running: `docker ps | grep n8n`
+- Verify webhook URL in chatbot matches n8n
+- Check n8n logs: `docker logs n8n`
+
+### Issue: Files not saving
+**Fix:**
+- Check directory permissions: `ls -la /path/to/uploads/`
+- Create directory manually: `mkdir -p /path/to/uploads && chmod 777 /path/to/uploads`
+
+### Issue: MySQL insert fails
+**Fix:**
+- Check table exists: `SHOW TABLES;`
+- Verify column names match
+- Check data types (especially date formats)
+
+### Issue: Base64 decode error
+**Fix:**
+- Ensure base64 string is properly formatted
+- Remove `data:image/jpeg;base64,` prefix before decoding
+
+---
+
+## Example Complete Workflow JSON
+
+Save this as `insurance_chatbot_workflow.json`:
+
+```json
+{
+  "name": "Insurance Chatbot Integration",
+  "nodes": [
+    {
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [250, 300],
+      "webhookId": "insurance-intake",
+      "parameters": {
+        "path": "insurance-intake",
+        "responseMode": "lastNode",
+        "httpMethod": "POST"
+      }
+    },
+    {
+      "name": "Process Data",
+      "type": "n8n-nodes-base.function",
+      "position": [450, 300]
+    },
+    {
+      "name": "Save to MySQL",
+      "type": "n8n-nodes-base.mySql",
+      "position": [650, 300]
+    },
+    {
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [850, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": { "main": [[{ "node": "Process Data" }]] },
+    "Process Data": { "main": [[{ "node": "Save to MySQL" }]] },
+    "Save to MySQL": { "main": [[{ "node": "Respond" }]] }
+  }
+}
+```
+
+Import this in n8n: **Workflows → Import from File**
+
+---
+
+## Next Steps
+
+After n8n receives and saves the data:
+
+1. **OCR Processing** - Your existing Python OCR worker processes documents
+2. **Data Validation** - Validate extracted fields
+3. **Router Trigger** - Call `router.py` to select insurer
+4. **Bot Execution** - Run Playwright bot for selected insurer
+5. **Quote Generation** - Generate and store quotes
+6. **User Notification** - Send SMS/Email with quotes
+
+---
+
+## 📞 Need Help?
+
+Share your n8n workflow screenshot and I'll help debug!

@@ -1,0 +1,28 @@
+{
+  "full_name": "Ahmed Khan",
+  "mobile": "+971501234567",
+  "email": "ahmed@example.com",
+  "dob": "1990-05-15",
+  "gender": "Male",
+  "nationality": "UAE",
+  "salary_range": "AED 10,001 - 20,000",
+  "has_existing_insurance": "No",
+  "insurance_type": "Comprehensive",
+  "vehicle_make": "Toyota",
+  "vehicle_model": "Camry",
+  "vehicle_year": "2020",
+  "documents": [
+    {
+      "name": "emirates_id_front.jpg",
+      "type": "image/jpeg",
+      "data": "data:image/jpeg;base64,/9j/4AAQSkZJRg..."
+    },
+    {
+      "name": "license_front.jpg",
+      "type": "image/jpeg",
+      "data": "data:image/jpeg;base64,iVBORw0KGgo..."
+    }
+  ],
+  "timestamp": "2025-10-08T14:32:15.123Z",
+  "source": "ai_chatbot_v1"
+}

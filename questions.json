@@ -1,0 +1,273 @@
+{
+  "questions": [
+    {
+      "id": "insurer",
+      "question": "which insurer do you want to choose?",
+      "type": "select",
+      "options": [
+        "Methaq",
+        "Alsagar",
+        "Adamjee",
+        "DNI"
+      ],
+      "required": true
+    },
+    {
+      "id": "current_insurer",
+      "question": "Enter your current insurer name",
+      "type": "text",
+      "placeholder":"eg. RSA, Oman Insurance, etc",
+      "dependsOn": {
+        "id": "insurer",
+        "value": ["Methaq"]
+      },
+      "required": true
+    },
+    {
+      "id": "mobile",
+      "question": "What is your mobile number?",
+      "type": "text",
+      "required": true,
+      "validation": {
+        "pattern": "^(\\+971|00971|0)?[0-9]{9}$",
+        "errorMessage": "Please enter a valid UAE mobile number"
+      }
+    },
+    {
+      "id": "email",
+      "question": "What is your email address?",
+      "type": "text",
+      "placeholder": "your.email@example.com",
+      "required": true,
+      "validation": {
+        "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+        "errorMessage": "Please enter a valid email address"
+      }
+    },
+    {
+      "id": "nationality_code",
+      "question": "Enter Nationality Code ",
+      "type": "text",
+      "placeholder": "Dub, ind, afg, pak",
+      "dependsOn": {
+        "id": "insurer",
+        "value": ["DNI"]
+      },
+      "required": true
+    },
+    {
+      "id": "address",
+      "question": "What is your address",
+      "placeholder": "Dubai, Abu Dhabi",
+      "required": true
+    },
+    {
+      "id": "city",
+      "question": "What is your city?",
+      "type": "text",
+      "placeholder": "It should be as it is, first letter capital rest small:- Dubai, Abu Dhabi",
+      "required": true
+    },
+    {
+      "id": "po_box",
+      "question": "Enter your post office box no",
+      "type": "number",
+      "placeholder": "26069",
+      "required": true
+    },
+    {
+      "id": "policy_type",
+      "question": "Select Policy Type",
+      "type": "select",
+      "options": [
+        "INDIVIDUAL",
+        "CORPORATE"
+      ],
+      "required": true
+    },
+    {
+      "id": "source",
+      "question": "How did you find us?",
+      "dependsOn": {
+        "id": "insurer",
+        "value": ["Methaq"]
+      },
+      "required": true
+    },
+    {
+      "id": "claim_free_years",
+      "question": "how much free claim should be given to client?",
+      "type": "select",
+      "options": [
+        "0-0 years",
+        "1-1 years",
+        "2-2 years",
+        "3-3 years"
+      ],
+      "required": true
+    },
+    {
+      "id": "ncb",
+      "question": "please enter ncb",
+      "type": "select",
+      "options": [
+        "0",
+        "1",
+        "2",
+        "3+"
+      ],
+      "dependsOn": {
+        "id": "insurer",
+        "value": ["DNI"]
+      },
+      "required": true
+    },
+    {
+      "id": "dni_scheme",
+      "question": "which dni scheme u want?",
+      "type": "select",
+      "options": [
+        "(60D) Comprehensive Heavy Vehicle",
+        "(60A-S1) Comprehensive High Value (For Vehicle Value Above 250,001)",
+        "(65S) Comprehensive Standard (For Vehicle Value Up To 250,000)",
+        "(66S) TPL - Standard (Summer Promo)",
+        "(66A) Third party - (Road Risk Only)"
+      ],
+      "dependsOn": {
+        "id": "insurer",
+        "value": ["DNI"]
+      },
+      "required": true
+    },
+    {
+      "id": "marital_status",
+      "question": "what is your marital status?",
+      "type": "select",
+      "options": [
+        "Married",
+        "Unmarried"
+      ],
+      "dependsOn": {
+        "id": "insurer",
+        "value": ["Methaq"]
+      },
+      "required": true
+    },
+    {
+      "id": "po_box_location",
+      "question": "Enter Po_box Location",
+      "type": "text",
+      "placeholder": "Dubai, Abu Dhabi",
+      "required": true
+    },
+    {
+      "id": "registration_issue_place",
+      "question": "Enter Registration_isue_place Location",
+      "type": "text",
+      "placeholder": "Dubai, Abu Dhabi",
+      "required": true
+    },
+    {
+      "id": "vehicle_mileage",
+      "question": "Enter your Vehicle_mileage",
+      "type": "number",
+      "dependsOn": {
+        "id": "insurer",
+        "value": ["Alsagar"]
+      },
+      "required": true
+    },
+    {
+      "id": "transaction_type",
+      "question": "Enter your Transaction Type",
+      "type": "select",
+      "options": ["New Vehicle Registration","Vehicle Renewal","Change in Ownership","Change Vehicle Ownership","Import Vehicle","Export Certificate","Update Registration Information","Issue Trade Plate","Renewable trade plate","Vehicle Renewal with Change Number"],
+      "required": true
+    },
+    {
+      "id": "emirates_city",
+      "question": "Enter Emirates_City ",
+      "type": "text",
+      "placeholder": "Dubai, Abu Dhabi",
+      "required": true
+    },
+    {
+      "id": "Eid_front",
+      "question": "Please upload your Emirates ID Front",
+      "type": "file_upload",
+      "required": true,
+      "dependsOn": {
+        "id": "insurer",
+        "value": ["Alsagar","DNI","Methaq"]
+      },
+      "acceptedDocs": [
+        "Emirates ID (Front)"
+      ]
+    },
+    {
+      "id": "Eid_back",
+      "question": "Please upload your Emirates ID Back Page",
+      "type": "file_upload",
+      "required": true,
+      "dependsOn": {
+        "id": "insurer",
+        "value": ["Alsagar","DNI","Methaq"]
+      },
+      "acceptedDocs": [
+        "Emirates ID (Back)"
+      ]
+    },
+    {
+      "id": "DL_front",
+      "question": "Please upload your Driving License Front Page",
+      "type": "file_upload",
+      "required": true,
+      "dependsOn": {
+        "id": "insurer",
+        "value": ["Alsagar","DNI","Methaq"]
+      },
+      "acceptedDocs": [
+        "Driving License (Front)"
+      ]
+    },
+    {
+      "id": "DL_back",
+      "question": "Please upload your Driving License Back Page",
+      "type": "file_upload",
+      "required": true,
+      "dependsOn": {
+        "id": "insurer",
+        "value": ["Alsagar","DNI","Methaq"]
+      },
+      "acceptedDocs": [
+        "Driving License (Back)"
+      ]
+    },
+    {
+      "id": "mulkiya_front",
+      "question": "Please upload your Mulkiya Front Page",
+      "type": "file_upload",
+      "required": true,
+      "dependsOn": {
+        "id": "insurer",
+        "value": ["Alsagar","DNI","Methaq"]
+      },
+      "acceptedDocs": [
+        "Mulkiya/RC Book (Front)"
+      ]
+    },
+    {
+      "id": "mulkiya_back",
+      "question": "Please upload your Mulkiya Back Page",
+      "type": "file_upload",
+      "required": true,
+      "dependsOn": {
+        "id": "insurer",
+        "value": ["Alsagar","DNI","Methaq"]
+      },
+      "acceptedDocs": [
+        "Mulkiya/RC Book (Back)"
+      ]
+    }
+  ]
+}
